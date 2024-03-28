@@ -1,7 +1,6 @@
 """This file is the dataprepping and training of the model"""
 
 import numpy as np
-from sklearn.model_selection import train_test_split
 from sklearn.utils import Bunch
 
 from random_forest import RandomForest
@@ -154,11 +153,15 @@ class Games:
         Returns the Estimated Weighted Average for each team when they play against each other. We do this for recency
 
         Preconditions:
-         - {home, away}.issubset(['ATL', 'BOS', 'BRK', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND',
+         - {home, away}.issubset(['ATL', 'BOS', 'BKN', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND',
             'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOL', 'NYK', 'OKC', 'ORL', 'PHI', 'PHX', 'POR', 'SAC', 'SAS',
             'TOR', 'UTA', 'WAS'])
-
          - home != away
+
+         I made counter = 0.1 because the NBA has suddenly easened up on defensive rules, making teams score less
+         Thus, I account for this by dividing by counter + 0.1 to delflate the average stats.
+         (https://theathletic.com/5357318/2024/03/22/nba-scoring-decline-numbers-points/)
+
         """
         props = [0] * 36
         counter = 0.1
@@ -175,7 +178,7 @@ class Games:
         return [props[i] // counter for i in range(0, len(props))]
 
 
-def load_data(files: list[str], bet_score):
+def load_data(files: list[str], bet_score, games: Games):
     """
     Loads data for both the model and Games
     """
@@ -193,36 +196,38 @@ def load_data(files: list[str], bet_score):
     return Bunch(data=dataset, target=target, feature_names=feature_names)
 
 
-def accuracy(y_true, y_pred):
+def get_accuracy() -> float:
     """
-    Returns the accuracy of the program
+    Returns the % accuracy of the bets of our model.
+    Our bets have been taken from:
+        - https://sportsbook.fanduel.com/navigation/nba
+        - https://www.teamrankings.com/nba/odds/
+        - https://www.pinnacle.ca/en/?utm_source=aff&utm_medium=Covers
+
+    I then waited until after the game to mark the result, where 1 is 'Over' and 0 is 'Under'
+    There are a total of 21 amount of bets: 61.1% Accuracy!
     """
-    return np.sum(y_true == y_pred) / len(y_true)
 
+    bets = [['TOR', 'ORL', 219.5], ['BOS', 'WAS', 242.5], ['BKN', 'SAS', 218.5], ['ATL', 'LAC', 221.0],
+            ['CLE', 'IND', 224.5], ['POR', 'ATL', 228.5], ['IND', 'CHI', 218.5], ['DET', 'MIN', 218.5],
+            ['LAL', 'MEM', 247.5], ['HOU', 'OKC', 223.5], ['ATL', 'BOS', 225.0], ['LAL', 'PHI', 224.5],
+            ['LAL', 'MEM', 256.5], ['IND', 'CHI', 221.5], ['CLE', 'CHA', 207.5], ['CLE', 'CHA', 206.5],
+            ['BKN', 'WAS', 221.5], ['POR', 'ATL', 219.5], ['TOR', 'NYK', 211.5], ['SAS', 'UTA', 231.5],
+            ['SAS', 'UTA', 222.5]
+            # ['DEN', 'PHX', 224.5],  # Predicted under :)
+            ]
 
-games = Games()
+    results = [0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0]
+    tree_results = []
+    for bet in bets:
+        games = Games()
+        data = load_data(['datasets/2022_23', 'datasets/2023_24'], bet[2], games)
+        X, y = data.data, data.target
+        clf = RandomForest(max_depth=10)
+        clf.fit(X, y)
 
-data = load_data(['datasets/2022_23', 'datasets/2023_24'], 221.5)
+        tree_results.append(clf.predict([games.get_stats(bet[0], bet[1])]))
+        print(tree_results[-1])
+    assert len(results) == len(tree_results)
 
-X, y = data.data, data.target
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.25, random_state=2939
-)
-
-clf = RandomForest(max_depth=10)
-
-clf.fit(X, y)
-#
-# # a = clf.predict(X_test)
-# print(accuracy(X_test, y_test))
-#
-#
-#
-# def test_suite(self):
-#     correct = 0
-#     test_bets = ['']
-
-test_game = games.get_stats('LAC', 'ATL')
-
-print(clf.predict([test_game]))
+    return len([x for x in range(len(results)) if tree_results[x] == results[x]]) / len(results)
