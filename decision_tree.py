@@ -1,36 +1,66 @@
+
 import numpy as np
 from collections import Counter
 
 
 class Node:
-    def __init__(self, feature=None, threshold=None, left=None, right=None, *, value=None):
+    """
+    Instance Attributes:
+    - feature: whichever feature this is from/for
+    - threshold: the gini impurity threshold to stop splitting
+    - left: the left branch of the Node
+    - right: the right branch of the Node
+    - value: Is None if it represents a split, else it is a leaf Node which stores the sorted data
+    """
+    def __init__(self, feature=None, threshold=None, left=None, right=None, *, value=None) -> None:
         self.feature = feature
         self.threshold = threshold
         self.left = left
         self.right = right
         self.value = value
 
-    def is_leaf_node(self):
+    def is_leaf_node(self) -> bool:
+        """
+        Returns True if self is a leaf
+        """
         return self.value is not None
 
 
 class DecisionTree:
-    def __init__(self, min_samples_split=2, max_depth=100, n_features=None):
+    """
+    The Class which represents the Decision Tree, Populated of Nodes
+    Instance Attributes:
+    - min_samples_split: The minimum samples we will split, regardless of overfitting
+    - max_depth: The maximum height of our tree
+    - n_features: the number of features we are splitting based on
+    - root: The base split for our data
+    """
+    def __init__(self, min_samples_split=2, max_depth=100, n_features=None) -> None:
         self.min_samples_split = min_samples_split
         self.max_depth = max_depth
         self.n_features = n_features
         self.root = None
 
-    def fit(self, X, y):
+    def fit(self, X, y) -> None:
+        """
+        Begins growing our trees based on our dataset X and our target y
+        """
         self.n_features = X.shape[1] if not self.n_features else min(X.shape[1], self.n_features)
         self.root = self._grow_tree(X, y)
 
-    def _grow_tree(self, X, y, depth=0):
+    def _grow_tree(self, X, y, depth=0) -> Node:
+        """
+        A function that handles the growth of our Tree
+        :param X: Dataset
+        :param y: Target
+        :param depth: The depth of this Node
+        :return: Returns either a leaf (the game) or the next splitting node
+        """
         n_samples, n_feats = X.shape
         n_labels = len(np.unique(y))
 
         # check the stopping criteria
-        if (depth >= self.max_depth or n_labels == 1 or n_samples < self.min_samples_split):
+        if depth >= self.max_depth or n_labels == 1 or n_samples < self.min_samples_split:
             leaf_value = self._most_common_label(y)
             return Node(value=leaf_value)
 
@@ -45,7 +75,14 @@ class DecisionTree:
         right = self._grow_tree(X[right_idxs, :], y[right_idxs], depth + 1)
         return Node(best_feature, best_thresh, left, right)
 
-    def _best_split(self, X, y, feat_idxs):
+    def _best_split(self, X, y, feat_idxs) -> tuple[int, float]:
+        """
+        Calculates the best split based on our Entropy Calculations
+        :param X: Dataset
+        :param y: Targets
+        :param feat_idxs: Indexes of our features
+        :return: Returns our index spliting_index and the Node's split_threshold
+        """
         best_gain = -1
         split_idx, split_threshold = None, None
 
@@ -64,7 +101,14 @@ class DecisionTree:
 
         return split_idx, split_threshold
 
-    def _information_gain(self, y, X_column, threshold):
+    def _information_gain(self, y, X_column, threshold) -> float:
+        """
+        Calculates the information split at this current split
+        :param y: Targets
+        :param X_column: Column in our data X based on our feature index
+        :param threshold: If we should split or not
+        :return: The information gain based on this split
+        """
         # parent entropy
         parent_entropy = self._entropy(y)
 
@@ -85,11 +129,22 @@ class DecisionTree:
         return information_gain
 
     def _split(self, X_column, split_thresh):
+        """
+        Splits our node
+        :param X_column: Our column in our dataset (X)
+        :param split_thresh: our splitting threshold
+        :return: ???IDJOSJ
+        """
         left_idxs = np.argwhere(X_column <= split_thresh).flatten()
         right_idxs = np.argwhere(X_column > split_thresh).flatten()
         return left_idxs, right_idxs
 
-    def _entropy(self, y):
+    def _entropy(self, y) -> float:
+        """
+        Standard Entropy Formula for calculating splits
+        :param y:
+        :return:
+        """
         hist = np.bincount(y)
         ps = hist / len(y)
         return -np.sum([p * np.log(p) for p in ps if p > 0])
@@ -99,7 +154,7 @@ class DecisionTree:
         value = counter.most_common(1)[0][0]
         return value
 
-    def predict(self, X):
+    def predict(self, X) -> np.array:
         return np.array([self._traverse_tree(x, self.root) for x in X])
 
     def _traverse_tree(self, x, node):

@@ -1,7 +1,7 @@
 """This file is the dataprepping and training of the model"""
 
-import csv
 import numpy as np
+from sklearn.model_selection import train_test_split
 from sklearn.utils import Bunch
 
 from random_forest import RandomForest
@@ -92,6 +92,7 @@ class Games:
         >>> print(g)
         ['03/05/2024', 'DEN vs. PHX', 'DEN', 'PHX']
         ['03/05/2024', 'IND @ DAL', 'DAL', 'IND']
+        ['12/29/2023', 'SAC @ ATL', 'ATL', 'SAC']
         <BLANKLINE>
         >>> print(g.games[0].total_points)
         224
@@ -104,12 +105,11 @@ class Games:
 
         team_performance = Team_Performance(row[0], fgm=int(row[6]), fga=int(row[7]),
                                             fg_percentage=float(row[8]), three_pm=int(row[9]), three_pa=int(row[10]),
-                                            three_p_percentage=float(row[11]), ftm=int(row[12]), fta=float(row[13]),
+                                            three_p_percentage=float(row[11]), ftm=int(row[12]), fta=int(row[13]),
                                             ft_percentage=float(row[14]), oreb=int(row[15]), dreb=int(row[16]),
                                             reb=int(row[17]), assists=int(row[18]), steals=int(row[19]),
                                             block=int(row[20]), turnovers=int(row[21]), personal_fouls=int(row[22]),
                                             plus_minus=int(row[23]))
-
         for game in self.games:
             if game.date == row[2]:
 
@@ -138,22 +138,33 @@ class Games:
         """
         Returns and prepares the data for the model
         """
-        data = []
+        data_so_far = []
         target = []
         for game in self.games:
-            assert len(data) == len(target)
-            if game.away_performance is None:
+            assert len(data_so_far) == len(target)
+            if game.away_performance is None or game.home_performance is None:
                 print(game)
-                return [], []
-            data += [game.home_performance.to_list() + game.away_performance.to_list()]
+                raise ValueError
+            data_so_far += [game.home_performance.to_list() + game.away_performance.to_list()]
             target.append(int(game.total_points > score))
-        return np.array(data), np.array(target)
+        return np.array(data_so_far), np.array(target)
 
-    def get_stats(self, home: str, away: str):
+    def get_stats(self, home: str, away: str) -> list[int | float]:
+        """
+        Returns the Estimated Weighted Average for each team when they play against each other. We do this for recency
+
+        Preconditions:
+         - {home, away}.issubset(['ATL', 'BOS', 'BRK', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND',
+            'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOL', 'NYK', 'OKC', 'ORL', 'PHI', 'PHX', 'POR', 'SAC', 'SAS',
+            'TOR', 'UTA', 'WAS'])
+
+         - home != away
+        """
         props = [0] * 36
-        counter = 0
+        counter = 0.1
         for game in self.games:
             if game.home_team == home and game.away_team == away:
+
                 counter += 1
                 for i in range(0, 17):
                     props[i] += game.home_performance.to_list()[i]
@@ -161,7 +172,8 @@ class Games:
                     props[i] += game.away_performance.to_list()[i - 18]
         if counter == 0:
             raise ValueError
-        return [props[i] / counter for i in range(0, len(props))]
+        return [props[i] // counter for i in range(0, len(props))]
+
 
 def load_data(files: list[str], bet_score):
     """
@@ -169,11 +181,14 @@ def load_data(files: list[str], bet_score):
     """
     for file in files:
         with (open(file) as csv_file):
-            data_reader = csv.reader(csv_file)
-            feature_names = next(data_reader)[1:]
-            for row in data_reader:
-                games.add_game(row)
-
+            lines = csv_file.readlines()
+            header = lines.pop(0).split()
+            header[1: 3] = [' '.join(header[1: 3])]
+            for line in lines:
+                un_preped_line = line.split()
+                un_preped_line[1: 4] = [' '.join(un_preped_line[1: 4])]
+                games.add_game(un_preped_line)
+    feature_names = header
     dataset, target = games.prepare_data(bet_score)
     return Bunch(data=dataset, target=target, feature_names=feature_names)
 
@@ -184,19 +199,30 @@ def accuracy(y_true, y_pred):
     """
     return np.sum(y_true == y_pred) / len(y_true)
 
+
 games = Games()
 
-data = load_data(['datasets/2022_23.csv'], 219.5)
+data = load_data(['datasets/2022_23', 'datasets/2023_24'], 221.5)
 
 X, y = data.data, data.target
-#
-# X_train, X_test, y_train, y_test = train_test_split(
-#     X, y, test_size=0.25, random_state=2939
-# )
 
-clf = RandomForest(max_depth=100)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=2939
+)
+
+clf = RandomForest(max_depth=10)
+
 clf.fit(X, y)
+#
+# # a = clf.predict(X_test)
+# print(accuracy(X_test, y_test))
+#
+#
+#
+# def test_suite(self):
+#     correct = 0
+#     test_bets = ['']
 
-test_game = games.get_stats('ORL', 'TOR')
+test_game = games.get_stats('LAC', 'ATL')
 
 print(clf.predict([test_game]))
