@@ -161,13 +161,12 @@ class Games:
          I made counter = 0.1 because the NBA has suddenly easened up on defensive rules, making teams score less
          Thus, I account for this by dividing by counter + 0.1 to delflate the average stats.
          (https://theathletic.com/5357318/2024/03/22/nba-scoring-decline-numbers-points/)
-
         """
+
         props = [0] * 36
         counter = 0.1
         for game in self.games:
             if game.home_team == home and game.away_team == away:
-
                 counter += 1
                 for i in range(0, 17):
                     props[i] += game.home_performance.to_list()[i]
@@ -213,21 +212,28 @@ def get_accuracy() -> float:
             ['LAL', 'MEM', 247.5], ['HOU', 'OKC', 223.5], ['ATL', 'BOS', 225.0], ['LAL', 'PHI', 224.5],
             ['LAL', 'MEM', 256.5], ['IND', 'CHI', 221.5], ['CLE', 'CHA', 207.5], ['CLE', 'CHA', 206.5],
             ['BKN', 'WAS', 221.5], ['POR', 'ATL', 219.5], ['TOR', 'NYK', 211.5], ['SAS', 'UTA', 231.5],
-            ['SAS', 'UTA', 222.5]
-            # ['DEN', 'PHX', 224.5],  # Predicted under :)
-            ]
+            ['SAS', 'UTA', 222.5], ['DEN', 'PHX', 224.5]]
 
-    results = [0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0]
+    results = [0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1]
     tree_results = []
     for bet in bets:
-        games = Games()
-        data = load_data(['datasets/2022_23', 'datasets/2023_24'], bet[2], games)
-        X, y = data.data, data.target
-        clf = RandomForest(max_depth=10)
-        clf.fit(X, y)
+        tree_results.append(predict_game(bet[0], bet[1], bet[2]))
 
-        tree_results.append(clf.predict([games.get_stats(bet[0], bet[1])]))
-        print(tree_results[-1])
-    assert len(results) == len(tree_results)
-
+    assert len(tree_results) == len(results)
     return len([x for x in range(len(results)) if tree_results[x] == results[x]]) / len(results)
+
+
+def predict_game(home_team, away_team, bet) -> int:
+    """
+    Predicts the game outcome using the home_team, away_team, and bet.
+    :param home_team: Name of Home team
+    :param away_team: Name of Away team
+    :param bet: The score we predict the game will be over/under
+    :return: 1: Over, 0: Under
+    """
+    games = Games()
+    data = load_data(['datasets/2021_22', 'datasets/2022_23', 'datasets/2023_24'], bet, games)
+    X, y = data.data, data.target
+    clf = RandomForest(max_depth=20)
+    clf.fit(X, y)
+    return int(clf.predict([games.get_stats(home_team, away_team)])[0])
