@@ -264,9 +264,8 @@ def get_accuracy() -> float:
     """
     Returns the % accuracy of the bets of our model.
     Our bets have been taken from:
-        - https://sportsbook.fanduel.com/navigation/nba
-        - https://www.teamrankings.com/nba/odds/
-        - https://www.pinnacle.ca/en/?utm_source=aff&utm_medium=Covers
+        - https://www.nba.com/nbabet
+        - https://www.oddsshark.com/nba/odds
 
     I then waited until after the game to mark the result, where 1 is 'Over' and 0 is 'Under'
     There are a total of 21 amount of bets: 61.1% Accuracy!
