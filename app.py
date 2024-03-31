@@ -143,29 +143,56 @@ class App(ctk.CTk):
         Selects the input data from the selectors/text fields and calls the
         predict_game() function to predict a game result
         """
+
+        # Display "Calculating 💭" while processing
+        self.result_label.configure(text="Calculating 💭")
+        self.update()
+
         home_team_name = self.home_team_selector.get()
         away_team_name = self.away_team_selector.get()
         over_under = self.over_under_entry.get()
 
+        if home_team_name == '' and away_team_name == '':
+            messagebox.showerror("Error", "Please choose the matchup using the dropdown menu")
+            return
+        elif home_team_name == '':
+            messagebox.showerror("Error", "Please choose the home team using the dropdown menu")
+            return
+        elif away_team_name == '':
+            messagebox.showerror("Error", "Please choose the away team using the dropdown menu")
+            return
+        elif home_team_name == away_team_name:
+            messagebox.showerror("Error", "Please choose different teams")
+            return
+
         home_team_abbr = self.team_abbreviations[home_team_name]
         away_team_abbr = self.team_abbreviations[away_team_name]
 
-        if not over_under.isdigit():
-            messagebox.showerror("Error", "Please enter a valid number for over/under points.")
-            return
+        try:
+            bet = float(over_under)
+            outcome = self.calculate_prediction(home_team_abbr, away_team_abbr, float(bet))
+            if outcome == 1:
+                result_text = "Over 🎉"
+            else:
+                result_text = "Under ❌"
+            self.result_label.configure(text=f"Prediction: {result_text}")
 
-        outcome = predict_game(home_team_abbr, away_team_abbr, float(over_under))
-        if outcome == 1:
-            result_text = "Over 🎉"
-        else:
-            result_text = "Under ❌"
-        self.result_label.configure(text=f"Prediction: {result_text}")
+        except ValueError:
+            self.result_label.configure(text="")
+            messagebox.showerror("Error", "Please enter a valid number for over/under points.")
+
+    def calculate_prediction(self, home_team_abbr, away_team_abbr, bet):
+        """
+        The purpose of this function is just to have the result label update while predict_game() is running
+        """
+        # Return the predicted outcome (1 for Over, 0 for Under)
+        return predict_game(home_team_abbr, away_team_abbr, bet)
 
 
 if __name__ == "__main__":
-    # import python_ta
+    import python_ta
     # python_ta.check_all(config={
     #   'max-line-length': 120
     # })
-    app = App()
-    app.mainloop()
+app = App()
+app.mainloop()
