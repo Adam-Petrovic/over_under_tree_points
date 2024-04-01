@@ -1,0 +1,11 @@
+# Over Under Tree Points Requirements
+
+# For train.py
+sklearn.utils
+
+# For decision_tree.py and random_forest.py:
+collections
+
+# For app.py
+tkinter
+customtkinter
