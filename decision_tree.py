@@ -20,9 +20,8 @@ class Node:
     """
     Instance Attributes:
     - feature: whichever feature this is from/for
-    - threshold: the gini impurity threshold to stop splitting
-    - left: the left branch of the Node
-    - right: the right branch of the Node
+    - threshold: the entropy threshold to stop splitting
+    - split: represents the right and left branches of the Node
     - value: Is None if it represents a split, else it is a leaf Node which stores the sorted data
     """
 
@@ -43,12 +42,6 @@ class Node:
         Returns True if self is a leaf
         """
         return self.value is not None
-
-
-# @dataclass
-# class Split:
-#     left: Optional[Node]
-#     right: Optional[Node]
 
 
 class DecisionTree:
@@ -81,7 +74,7 @@ class DecisionTree:
 
     def _grow_tree(self, dataset: np.ndarray, targets: np.ndarray, depth: int = 0) -> Node:
         """
-        Returns the Root of the Tree
+        Recursive method to grow our tree.
         :param dataset: Dataset
         :param targets: Targets
         :param depth: The depth of this Node
@@ -92,7 +85,7 @@ class DecisionTree:
 
         # check the stopping criteria
         if depth >= self.max_depth or n_labels == 1 or n_samples < self.min_samples_split:
-            leaf_value = self._most_common_label(targets)
+            leaf_value = self._most_common_target(targets)
             return Node(feature=None, threshold=None, split=_Split(left=None, right=None), value=leaf_value)
 
         feat_idxs = np.random.choice(n_feats, self.n_features, replace=False)
@@ -108,7 +101,7 @@ class DecisionTree:
 
     def _best_split(self, dataset: np.ndarray, target: np.ndarray, feat_idxs: list[int]) -> tuple[int, float]:
         """
-        Calculates the best split based on our Entropy Calculations
+        Calculates the best split based on the best information gain
         :param dataset: Dataset
         :param target: Targets
         :param feat_idxs: Indexes of our features
@@ -134,7 +127,7 @@ class DecisionTree:
 
     def _information_gain(self, targets: np.ndarray, dataset_column: np.ndarray, threshold: float) -> float:
         """
-        Calculates the information split at this current split
+        Calculates the information gain for this split
         :param targets: Targets
         :param dataset_column: Column in our data X based on our feature index
         :param threshold: If we should split or not
@@ -164,7 +157,7 @@ class DecisionTree:
         Splits our node
         :param dataset_column: Our column in our dataset (X)
         :param split_thresh: our splitting threshold
-        :return: ???IDJOSJ
+        :return: indexes to split
         """
         left_idxs = np.argwhere(dataset_column <= split_thresh).flatten()
         right_idxs = np.argwhere(dataset_column > split_thresh).flatten()
@@ -174,25 +167,32 @@ class DecisionTree:
         """
         Standard Entropy Formula for calculating splits
         :param targets:
-        :return:
+        :return: Entropy
         """
         hist = np.bincount(targets)
         ps = hist / len(targets)
         return -np.sum([p * np.log(p) for p in ps if p > 0])
 
-    def _most_common_label(self, targets: np.ndarray) -> Any:
+    def _most_common_target(self, targets: np.ndarray) -> Any:
         counter = Counter(targets)
         value = counter.most_common(1)[0][0]
         return value
 
-    def predict(self, dataset: np.ndarray) -> np.ndarray:
+    def predict(self, games: np.ndarray) -> np.ndarray:
         """
-        :param dataset: predicts the data
+        Our main predictor function
+        :param games: predicts using this data
         :return: Array of predictions
         """
-        return np.array([self._traverse_tree(x, self.root) for x in dataset])
+        return np.array([self._traverse_tree(game, self.root) for game in games])
 
     def _traverse_tree(self, game_entry: list, node: Node) -> Any:
+        """
+        How we find where our game lies in our DecisionTree, implemented recursively
+        :param game_entry: Our game in question
+        :param node: Our root node
+        :return: the target/label where the game belongs.
+        """
         if node.is_leaf_node():
             return node.value
 

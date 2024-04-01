@@ -82,7 +82,7 @@ class App(ctk.CTk):
 
     def __init__(self) -> None:
         super().__init__()
-        self.title("Over Tree Points")
+        self.title("Over Under Tree Points")
         self.geometry("600x440")
 
         self.team_data = TeamData(
@@ -173,7 +173,7 @@ class App(ctk.CTk):
 
         # Display "Calculating 💭" while processing
         self.prediction_ui.result_label.configure(text="Calculating 💭")
-
+        self.update()
         home_team_name = self.selection_ui.home_team_selector.get()
         away_team_name = self.selection_ui.away_team_selector.get()
         over_under = self.prediction_ui.over_under_entry.get()
@@ -197,6 +197,7 @@ class App(ctk.CTk):
         try:
             bet = float(over_under)
             outcome = self.calculate_prediction(home_team_abbr, away_team_abbr, float(bet))
+
             if outcome == 1:
                 result_text = "Over 🎉"
             else:
@@ -208,11 +209,11 @@ class App(ctk.CTk):
             messagebox.showerror("Error", "Please enter a valid number for over/under points.")
 
 
+
+
 if __name__ == "__main__":
     import python_ta
 
     python_ta.check_all(config={
         'max-line-length': 120
     })
-    app = App()
-    app.mainloop()
