@@ -24,7 +24,6 @@ class SelectionUI:
     away_team_selector: Optional[ttk.Combobox] = None
 
     def __init__(self, parent: Any, team_data: TeamData) -> None:
-
         self.home_team_label = ctk.CTkLabel(parent, text="Select Home Team:")
         self.home_team_label.grid(row=0, column=1, padx=10, sticky='w')
 
@@ -83,7 +82,7 @@ class App(ctk.CTk):
 
     def __init__(self) -> None:
         super().__init__()
-        self.title("Over Tree Points")
+        self.title("Over Under Tree Points")
         self.geometry("600x440")
 
         self.team_data = TeamData(
@@ -159,34 +158,55 @@ class App(ctk.CTk):
         else:
             self.logo_ui.away_logo_label.configure(image="")
 
+    def calculate_prediction(self, home_team_abbr: str, away_team_abbr: str, bet: float) -> int:
+        """
+        The purpose of this function is just to have the result label update while predict_game() is running
+        """
+        # Return the predicted outcome (1 for Over, 0 for Under)
+        return predict_game(home_team_abbr, away_team_abbr, bet)
+
     def predict_outcome(self) -> None:
         """
         Selects the input data from the selectors/text fields and calls the
         predict_game() function to predict a game result
         """
+
+        # Display "Calculating 💭" while processing
+        self.prediction_ui.result_label.configure(text="Calculating 💭")
+        self.update()
         home_team_name = self.selection_ui.home_team_selector.get()
         away_team_name = self.selection_ui.away_team_selector.get()
         over_under = self.prediction_ui.over_under_entry.get()
 
+        if home_team_name == '' and away_team_name == '':
+            messagebox.showerror("Error", "Please choose the matchup using the dropdown menu")
+            return
+        elif home_team_name == '':
+            messagebox.showerror("Error", "Please choose the home team using the dropdown menu")
+            return
+        elif away_team_name == '':
+            messagebox.showerror("Error", "Please choose the away team using the dropdown menu")
+            return
+        elif home_team_name == away_team_name:
+            messagebox.showerror("Error", "Please choose different teams")
+            return
+
         home_team_abbr = self.team_data.team_abbreviations[home_team_name]
         away_team_abbr = self.team_data.team_abbreviations[away_team_name]
 
-        if home_team_name == away_team_name:
-            messagebox.showerror("Error", "Please select two distinct teams.")
-            return
-
         try:
-            over_under_value = float(over_under)
-        except ValueError:
-            messagebox.showerror("Error", "Please enter a valid number for over/under points.")
-            return
+            bet = float(over_under)
+            outcome = self.calculate_prediction(home_team_abbr, away_team_abbr, float(bet))
 
-        outcome = predict_game(home_team_abbr, away_team_abbr, over_under_value)
-        if outcome == 1:
-            result_text = "Over 🎉"
-        else:
-            result_text = "Under ❌"
-        self.prediction_ui.result_label.configure(text=f"Prediction: {result_text}")
+            if outcome == 1:
+                result_text = "Over 🎉"
+            else:
+                result_text = "Under ❌"
+            self.prediction_ui.result_label.configure(text=f"Prediction: {result_text}")
+
+        except ValueError:
+            self.prediction_ui.result_label.configure(text="")
+            messagebox.showerror("Error", "Please enter a valid number for over/under points.")
 
 
 if __name__ == "__main__":
