@@ -290,7 +290,7 @@ class _Game:
     Preconditions:
      - len(date) == 10
      - total_points >= 0
-     - ('vs.' in matchup_name) or ('@' in matchup_name)
+     - 'vs.' in matchup_name or '@' in matchup_name
      - matchup is not None
     """
 
