@@ -35,7 +35,8 @@ class Node:
     """
     Instance Attributes:
     - feature: whichever feature this is from/for
-    - threshold: the entropy threshold to stop splitting
+    - threshold: the splitting criteria (if the feature is determined to be scored less than the threshold, go left.
+     Else, right)
     - split: represents the right and left branches of the Node
     - value: Is None if it represents a split, else it is a leaf Node which stores the sorted data
     """
@@ -67,6 +68,11 @@ class DecisionTree:
     - max_depth: The maximum height of our tree
     - n_features: The number of features we take into consideration for splitting
     - root: The base split for our data
+
+    Representation Invariants:
+     - min_samples_split > 1
+     - max_depth > 0
+     - n_features > 0
     """
 
     min_samples_split: int
@@ -83,17 +89,34 @@ class DecisionTree:
     def fit(self, dataset: np.ndarray, targets: np.ndarray) -> None:
         """
         Begins growing our trees based on our dataset and our target
+
+        Parameters:
+         - dataset: Dataset
+         - targets: Targets
+
+        Preconditions:
+         - len(dataset) == len(targets)
+         - len(dataset) > 0
+         - len(targets) > 0
         """
         self.n_features = dataset.shape[1] if not self.n_features else min(dataset.shape[1], self.n_features)
         self.root = self._grow_tree(dataset, targets)
 
     def _grow_tree(self, dataset: np.ndarray, targets: np.ndarray, depth: int = 0) -> Node:
         """
-        Recursive method to grow our tree.
-        :param dataset: Dataset
-        :param targets: Targets
-        :param depth: The depth of this Node
-        :return: Returns either a leaf (the game) or the next splitting node
+        Recursive method to grow our tree- it stops once our stopping criteria is met.
+
+        Parameters:
+         - dataset: Dataset
+         - targets: Targets
+         - depth: The depth of this Node
+         - return: Returns either a leaf (the game) or the next splitting node
+
+        Preconditions:
+         - len(dataset) == len(targets)
+         - len(dataset) > 0
+         - len(targets) > 0
+         - self.max_depth + 1 > depth >= 0
         """
         n_samples, n_feats = dataset.shape
         n_labels = len(np.unique(targets))
@@ -116,11 +139,20 @@ class DecisionTree:
 
     def _best_split(self, dataset: np.ndarray, target: np.ndarray, feat_idxs: list[int]) -> tuple[int, float]:
         """
-        Calculates the best split based on the best information gain
-        :param dataset: Dataset
-        :param target: Targets
-        :param feat_idxs: Indexes of our features
-        :return: Returns our index spliting_index and the Node's split_threshold
+        Calculates the best split based on the best information gain and returns our index spliting_index
+        and the Node's split_threshold.
+
+
+        Parameters:
+         - dataset: Dataset
+         - target: Targets
+         - feat_idxs: Indexes of our features
+
+        Preconditions:
+         - len(dataset) == len(targets)
+         - len(dataset) > 0
+         - len(targets) > 0
+         - feat_idxs > 0
         """
         best_gain = -1
         split_idx, split_threshold = None, None
@@ -142,11 +174,15 @@ class DecisionTree:
 
     def _information_gain(self, targets: np.ndarray, dataset_column: np.ndarray, threshold: float) -> float:
         """
-        Calculates the information gain for this split
-        :param targets: Targets
-        :param dataset_column: Column in our data X based on our feature index
-        :param threshold: If we should split or not
-        :return: The information gain based on this split
+        Calculates the information gain for this split, and returns it.
+
+        Parameters:
+         - targets: Targets
+         - dataset_column: Column in our data X based on our feature index
+         - threshold: The splitting criteria
+
+         Preconditions:
+          - len(targets) > 0
         """
         # parent entropy
         parent_entropy = self._entropy(targets)
@@ -169,10 +205,14 @@ class DecisionTree:
 
     def _split(self, dataset_column: np.ndarray, split_thresh: float) -> tuple:
         """
-        Splits our node
-        :param dataset_column: Our column in our dataset (X)
-        :param split_thresh: our splitting threshold
-        :return: indexes to split
+        Splits our node, and then it returns the indexes to split.
+
+        Parameters:
+         - dataset_column: Our column in our dataset (X)
+         - split_thresh: Determines whether to go left or right
+
+         Preconditions:
+          - len(dataset_column) > 0
         """
         left_idxs = np.argwhere(dataset_column <= split_thresh).flatten()
         right_idxs = np.argwhere(dataset_column > split_thresh).flatten()
@@ -181,32 +221,58 @@ class DecisionTree:
     def _entropy(self, targets: np.ndarray) -> float:
         """
         Standard Entropy Formula for calculating splits
-        :param targets:
-        :return: Entropy
+
+        Parameters:
+         - targets:
+
+        Preconditions:
+         - len(targets) > 0
         """
         hist = np.bincount(targets)
         ps = hist / len(targets)
         return -np.sum([p * np.log(p) for p in ps if p > 0])
 
     def _most_common_target(self, targets: np.ndarray) -> Any:
+        """
+        Counts and returns 1 or 0 depending on which appears most
+
+        Parameters:
+         - targets: Targets
+
+         Preconditions:
+          - len(targets) > 0
+         """
         counter = Counter(targets)
         value = counter.most_common(1)[0][0]
         return value
 
     def predict(self, games: np.ndarray) -> np.ndarray:
         """
-        Our main predictor function
-        :param games: predicts using this data
-        :return: Array of predictions
+        Our main predictor function, which will go down our tree similar to a BinarySearchTree to find where our
+        game lies
+
+        Parameters:
+         - games: Games we want to predict over/under for
+
+         Preconditions:
+          - len(games) > 0
         """
         return np.array([self._traverse_tree(game, self.root) for game in games])
 
     def _traverse_tree(self, game_entry: list, node: Node) -> Any:
         """
-        How we find where our game lies in our DecisionTree, implemented recursively
-        :param game_entry: Our game in question
-        :param node: Our root node
-        :return: the target/label where the game belongs.
+        How we find where our game lies in our DecisionTree, implemented recursively- Similar to BinarySearchTree
+        traversal were if the feature is ranked less than the threshold, then the threshold, then it goes left. Else,
+        it goes right.
+
+        Returns the target/label where the game belongs.
+
+        Parameters:
+         - game_entry: Our game in question
+         - node: Our node
+
+         Preconditions:
+          - len(game_entry) == 24
         """
         if node.is_leaf_node():
             return node.value
@@ -220,5 +286,8 @@ if __name__ == "__main__":
     import python_ta
 
     python_ta.check_all(config={
+        'extra-imports': ['__future__', 'typing', 'numpy', 'collections', '',
+                          'dataclasses'],  # the names (strs) of imported modules
+        'allowed-io': [],  # the names (strs) of functions that call print/open/input
         'max-line-length': 120
     })

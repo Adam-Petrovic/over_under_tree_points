@@ -36,6 +36,11 @@ class RandomForest:
      - min_samples: The mimnumum samples to make the next split
      - n_features: The number of features to consider
      - trees: Keeps track of the trees
+
+     Representation Invariants:
+      - n_trees > 0
+      - max_depth > 0
+      - n_features > 0
     """
 
     n_trees: int
@@ -55,8 +60,13 @@ class RandomForest:
     def fit(self, dataset: np.ndarray, targets: np.ndarray) -> None:
         """
         Fits our dataset X with our target Y (trains our model)
-        :param dataset: Dataset
-        :param targets: Targets
+         - dataset: Dataset
+         - targets: Targets
+
+        Preconditions:
+         - len(dataset) > 0
+         - len(targets) > 0
+         - len(dataset) == len(targets)
         """
         self.trees = []
         for _ in range(self.n_trees):
@@ -68,24 +78,48 @@ class RandomForest:
             self.trees.append(tree)
 
     def _bootstrap_samples(self, dataset: np.ndarray, targets: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Boostraps our samples to then use for our Decision Trees
+        Parameters:
+         - dataset: Dataset
+         - targets: Targets
+
+        Preconditions:
+         - len(dataset) > 0
+         - len(targets) > 0
+         - len(dataset) == len(targets)
+        """
         n_samples = dataset.shape[0]
         idxs = np.random.choice(n_samples, n_samples, replace=True)
         return dataset[idxs], targets[idxs]
 
-    def _most_common_label(self, target: np.ndarray) -> int:
-        counter = Counter(target)
+    def _most_common_target(self, targets: np.ndarray) -> int:
+        """
+        Returns the most commmon target amongst the games in the Node (1 or 0)
+        Parameters:
+         - targets: Targets
+
+        Preconditions:
+         - len(targets) > 0
+        """
+        counter = Counter(targets)
         most_common = counter.most_common(1)[0][0]
         return most_common
 
-    def predict(self, dataset: list[np.ndarray]) -> np.ndarray:
+    def predict(self, betting_games: list) -> np.ndarray:
         """
-        Handles our predictions
-        :param dataset:
-        :return:
+        Takes our dataset of games to predict, then runs these to the multiple self.trees.
+        It then majority votes the outcome from these trees
+
+        Parameter:
+          - betting_games: The list of games we want to figure out if they're over or under our bet score
+
+        Preconditions:
+         - len(betting_games) > 0
         """
-        predictions = np.array([tree.predict(dataset) for tree in self.trees])
+        predictions = np.array([tree.predict(betting_games) for tree in self.trees])
         tree_preds = np.swapaxes(predictions, 0, 1)
-        predictions = np.array([self._most_common_label(pred) for pred in tree_preds])
+        predictions = np.array([self._most_common_target(pred) for pred in tree_preds])
         return predictions
 
 
@@ -93,5 +127,7 @@ if __name__ == "__main__":
     import python_ta
 
     python_ta.check_all(config={
+        'extra-imports': ['numpy', 'collections', 'decision_tree'],  # the names (strs) of imported modules
+        'allowed-io': [],  # the names (strs) of functions that call print/open/input
         'max-line-length': 120
     })

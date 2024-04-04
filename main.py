@@ -15,8 +15,9 @@ please message me at adam.petrovic2005@gmail.com
 
 This file is Copyright (c) 2024 Adam Petrovic
 """
+
 from app import App
-from train import get_accuracy, test_model
+from train import get_accuracy, model_accuracy
 
 
 #  Runs the app
@@ -39,4 +40,14 @@ def implementation_accuracy() -> None:
     """
     Feature: Checks the accuracy of our betting model (Real Bets)
     """
-    print(test_model())
+    print(model_accuracy())
+
+
+# if __name__ == "__main__":
+#     import python_ta
+#
+#     python_ta.check_all(config={
+#         'extra-imports': ['train', 'app'],  # the names (strs) of imported modules
+#         'allowed-io': ['betting_model_accuracy', 'implementation_accuracy'],
+#         'max-line-length': 120
+#     })
