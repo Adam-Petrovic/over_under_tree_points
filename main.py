@@ -16,6 +16,7 @@ please message me at adam.petrovic2005@gmail.com
 This file is Copyright (c) 2024 Adam Petrovic
 """
 
+import turtle
 from app import App
 from train import get_accuracy, model_accuracy
 
@@ -27,6 +28,7 @@ def run_app() -> None:
     """
     app = App()
     app.mainloop()
+
 
 
 def betting_model_accuracy() -> None:

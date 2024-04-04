@@ -1,5 +1,5 @@
 # Over Under Tree Points Requirements
 
-customtkinter~=5.2.2
-numpy~=1.26.3
-scikit-learn~=1.4.1.post1
+customtkinter
+numpy
+scikit-learn
