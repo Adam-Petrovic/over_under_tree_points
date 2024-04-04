@@ -1,4 +1,21 @@
-"""GUI/frontend/app"""
+"""Over Under Tree Points: app.py
+
+Module Description
+==================
+This module deals with the GUI (Graphical User Interface), or what the user sees.
+The team logos photos are located in the logos folder.
+
+Copyright and Usage Information
+===============================
+
+This file is provided solely for the personal and use of Adam.
+All forms of distribution of this code, whether as given or with any changes, are
+expressly prohibited, unless permitted by either Adam or Grant.
+For more information on copyright on this material,
+please message Grant
+
+This file is Copyright (c) 2024 Grant Hamblin and Adam Petrovic
+"""
 from typing import Any, Optional
 from dataclasses import dataclass
 from tkinter import ttk, messagebox, PhotoImage
@@ -9,14 +26,27 @@ from train import predict_game
 # note for TA - we are aware these dataclasses are not necessary, it is just for bypassing pythonTA
 @dataclass
 class TeamData:
-    """Dataclass for storing team abbreviations and logos"""
+    """Dataclass for storing team abbreviations and logos
+
+        Instance Attributes:
+        - team_abbreviations: maps team to its abbreviation eg: (Atlanta: ATL)
+        - logos_path: path to the folder of logos in our project directory
+        - logos: maps the team to its actual logo image
+    """
     team_abbreviations: dict[str, str]
     logos_path: str
     logos: dict[str, PhotoImage]
 
 
 class SelectionUI:
-    """Class for storing and initializing selection-related UI components."""
+    """Class for storing and initializing selection-related UI components.
+
+        Instance Attributes:
+        - home_team_label: home team label on the GUI
+        - away_team_label: away team label on the GUI
+        - home_team_selector: dropdown for selecting the home team
+        - away_team_selector: dropdown for selecting the away team
+    """
 
     home_team_label: Optional[ctk.CTkLabel] = None
     away_team_label: Optional[ctk.CTkLabel] = None
@@ -40,7 +70,14 @@ class SelectionUI:
 
 
 class PredictionUI:
-    """Class for storing and initializing prediction related UI components"""
+    """Class for storing and initializing prediction related UI components
+
+        Instance Attributes:
+        - over_under_entry: box for entering betting line
+        - predict_button: button for calculating whether over/under
+        - result_label: displays whether inputs result in over or under
+
+    """
 
     over_under_entry: Optional[ctk.CTkEntry]
     predict_button: Optional[ctk.CTkButton]
@@ -58,7 +95,12 @@ class PredictionUI:
 
 
 class LogoUI:
-    """Class for storing and initializing logo related UI"""
+    """Class for storing and initializing logo related UI
+
+        Instance Attributes:
+        - home_logo_label: stores current selected home team's logo
+        - away_logo_label: stores current selected away team's logo
+    """
 
     home_logo_label: Optional[ctk.CTkLabel]
     away_logo_label: Optional[ctk.CTkLabel]
@@ -72,7 +114,16 @@ class LogoUI:
 
 
 class App(ctk.CTk):
-    """Class for the tkinter app"""
+    """Class for the tkinter app
+
+        Instance Attributes:
+        - title: title of the app
+        - geometry: size of the app (x by y pixels)
+        - team_data: instance of TeamData class
+        - selection_ui: instance of SelectionUI class
+        - prediction_ui: instance of PredictionUI class
+        - logo_ui: instance of LogoUI class
+    """
     title: Optional[Any]
     geometry: Optional[Any]
     team_data: TeamData
@@ -161,6 +212,11 @@ class App(ctk.CTk):
     def calculate_prediction(self, home_team_abbr: str, away_team_abbr: str, bet: float) -> int:
         """
         The purpose of this function is just to have the result label update while predict_game() is running
+
+        Preconditions:
+            - home_team_abbr != ""
+            - away_team_abbr != ""
+            - bet >= 0
         """
         # Return the predicted outcome (1 for Over, 0 for Under)
         return predict_game(home_team_abbr, away_team_abbr, bet)
@@ -213,5 +269,7 @@ if __name__ == "__main__":
     import python_ta
 
     python_ta.check_all(config={
+        'extra-imports': [],  # the names (strs) of imported modules
+        'allowed-io': [],     # the names (strs) of functions that call print/open/input
         'max-line-length': 120
     })
