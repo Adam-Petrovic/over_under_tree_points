@@ -1,4 +1,21 @@
-"""GUI/frontend/app"""
+"""Over Under Tree Points: app.py
+
+Module Description
+==================
+This module deals with the GUI (Graphical User Interface), or what the user sees.
+The team logos photos are located in the logos folder.
+
+Copyright and Usage Information
+===============================
+
+This file is provided solely for the personal and use of Adam.
+All forms of distribution of this code, whether as given or with any changes, are
+expressly prohibited, unless permitted by either Adam or Grant.
+For more information on copyright on this material,
+please message Grant
+
+This file is Copyright (c) 2024 Grant Hamblin and Adam Petrovic
+"""
 from typing import Any, Optional
 from dataclasses import dataclass
 from tkinter import ttk, messagebox, PhotoImage

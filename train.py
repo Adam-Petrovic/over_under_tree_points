@@ -1,8 +1,28 @@
-"""This file is the dataprepping and training of the model"""
+"""Over Under Tree Points: decision_tree.py
+
+Module Description
+==================
+This module deals with the training of our model, which mainly includes the prepping of data/loading data from our
+datasets, fitting the model with that data, placing predictions, and accuracy tests.
+
+Copyright and Usage Information
+===============================
+
+This file is provided solely for the personal and use of Adam.
+All forms of distribution of this code, whether as given or with any changes, are
+expressly prohibited, unless permitted by either Adam or Grant.
+For more information on copyright on this material,
+please message Adam at adam.petrovic2005@gmail.com
+
+This file is Copyright (c) 2024 Adam Petrovic
+"""
 from dataclasses import dataclass
 from typing import Optional
 import numpy as np
+import sklearn
+from sklearn.model_selection import train_test_split
 from sklearn.utils import Bunch
+from sklearn import datasets
 
 from random_forest import RandomForest
 
@@ -139,13 +159,23 @@ class Games:
         """
         Creates a game, and fills game out with TeamPerformance, correclty assigning the home and away team
 
+        Preconditions:
+            - len(row) == 24
+
+
         >>> lst = [
-        ... ['DEN','DEN vs. PHX', '03/05/2024','L',265,107,41,96,42.7,15,40,37.5,10,14,71.4,10,41,51,25,6,6,15,15,-10],
-        ... ['PHX','PHX @ DEN',   '03/05/2024','W',265,117,42,96,43.8,15,34,44.1,18,22,81.8,11,41,52,32,9,7,10,19,10],
-        ... ['IND','IND @ DAL',   '03/05/2024','W',240,137,50,93,53.8,18,39,46.2,19,24,79.2,9,34,43,34,3,2,9,21,17],
-        ... ['DAL','DAL vs. IND', '03/05/2024','L',240,120,45,93,48.4,13,39,33.3,17,21,81.0,9,32,41,23,5,6,9,23,-17],
-        ... ['SAC','SAC @ ATL',   '12/29/2023','W',240,117,46,89,51.7,17,45,37.8,8,15,53.3,5,33,38,35,9,3,12,20,7],
-        ... ['ATL','ATL vs. SAC', '12/29/2023','L',240,110,37,94,39.4,15,43,34.9,21,25,84.0,18,33,51,29,9,4,15,16,-7]]
+        ... ['DEN','DEN vs. PHX','03/05/2024','L','265','107','41','96','42.7','15','40','37.5','10','14','71.4','10',
+        ... '41','51','25','6','6','15','15','-10'],
+        ... ['PHX','PHX @ DEN','03/05/2024','W','265','117','42','96','43.8','15','34','44.1','18','22','81.8','11',41,
+        ... '52','32','9','7','10','19','10'],
+        ... ['IND','IND @ DAL','03/05/2024','W','240','137','50','93','53.8','18','39','46.2','19','24','79.2','9','34',
+        ... '43','34','3','2','9','21','17'],
+        ... ['DAL','DAL vs. IND','03/05/2024','L','240','120','45','93','48.4','13','39','33.3','17','21','81.0','9',
+        ... '32','41','23','5','6','9','23','-17'],
+        ... ['SAC','SAC @ ATL','12/29/2023','W','240','117','46','89','51.7','17','45','37.8','8','15','53.3','5','33',
+        ... '38','35',9,'3','12','20','7'],
+        ... ['ATL','ATL vs. SAC','12/29/2023','L','240','110','37','94','39.4','15','43','34.9','21','25','84.0','18',
+        ... 33,'51',29,'9','4','15','16','-7']]
         >>> g = Games()
         >>> for r in lst:
         ...     g.add_game(r)
@@ -221,10 +251,6 @@ class Games:
             'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOL', 'NYK', 'OKC', 'ORL', 'PHI', 'PHX', 'POR', 'SAC', 'SAS',
             'TOR', 'UTA', 'WAS'])
          - home != away
-
-         I made counter = 0.1 because the NBA has suddenly easened up on defensive rules, making teams score less
-         Thus, I account for this by dividing by counter + 0.1 to delflate the average stats.
-         (https://theathletic.com/5357318/2024/03/22/nba-scoring-decline-numbers-points/)
         """
 
         props = [0] * 36
@@ -268,23 +294,52 @@ def get_accuracy() -> float:
         - https://www.oddsshark.com/nba/odds
 
     I then waited until after the game to mark the result, where 1 is 'Over' and 0 is 'Under'
-    There are a total of 21 amount of bets: 61.1% Accuracy!
+    There are a total of 21 amount of bets:  Accuracy!
+
+    We have 11 unders, 21 overs.
     """
 
-    bets = [['TOR', 'ORL', 219.5], ['BOS', 'WAS', 242.5], ['BKN', 'SAS', 218.5], ['ATL', 'LAC', 221.0],
-            ['CLE', 'IND', 224.5], ['POR', 'ATL', 228.5], ['IND', 'CHI', 218.5], ['DET', 'MIN', 218.5],
+    bets = [['TOR', 'ORL', 219.5], ['BOS', 'WAS', 242.5], ['ATL', 'LAC', 221.0],
+            ['CLE', 'IND', 224.5], ['POR', 'ATL', 228.5], ['DET', 'MIN', 218.5],
             ['LAL', 'MEM', 247.5], ['HOU', 'OKC', 223.5], ['ATL', 'BOS', 225.0], ['LAL', 'PHI', 224.5],
             ['LAL', 'MEM', 256.5], ['IND', 'CHI', 221.5], ['CLE', 'CHA', 207.5], ['CLE', 'CHA', 206.5],
             ['BKN', 'WAS', 221.5], ['POR', 'ATL', 219.5], ['TOR', 'NYK', 211.5], ['SAS', 'UTA', 231.5],
-            ['SAS', 'UTA', 222.5], ['DEN', 'PHX', 224.5]]
+            ['SAS', 'UTA', 222.5], ['DEN', 'PHX', 224.5], ['DEN', 'CLE', 211.0], ['DEN', 'CLE', 213.5],
+            ['TOR', 'PHI', 218.5], ['WAS', 'MIA', 219.5], ['BKN', 'LAL', 226.5], ['BKN', 'LAL', 214.5],
+            ['CHA', 'LAC', 215.0], ['CHA', 'LAC', 215.0], ['CHA', 'LAC', 213.0], ['MIN', 'CHI', 212.0],
+            ['HOU', 'DAL', 231.5], ['SAC', 'UTA', 225.5], ['NYK', 'OKC', 217.5]]
 
-    results = [0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1]
+    results = [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0]
     tree_results = []
+    assert len(bets) == len(results)
+
+    print('Starting to calculate bets')
     for bet in bets:
         tree_results.append(predict_game(bet[0], bet[1], bet[2]))
+        print(tree_results)
 
-    assert len(tree_results) == len(results)
     return len([x for x in range(len(results)) if tree_results[x] == results[x]]) / len(results)
+
+
+def test_model() -> float:
+    """
+    :return: Accuracy based on a real data
+    """
+    # Uses a dataset from sklearn with a predetermined accuracy of data
+    test_data = sklearn.datasets.load_breast_cancer()
+    print('testing group')
+    X = test_data.data
+    y = test_data.target
+
+    # Splits data int training and testing data
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=1234
+    )
+
+    clf = RandomForest(n_trees=20)
+    clf.fit(X_train, y_train)
+    predictions = clf.predict(X_test)
+    return len([x for x in range(len(y_test)) if predictions[x] == y_test[x]]) / len(y_test)
 
 
 def predict_game(home_team: str, away_team: str, bet: float) -> int:
@@ -301,12 +356,14 @@ def predict_game(home_team: str, away_team: str, bet: float) -> int:
     dataset, targets = data.data, data.target
     clf = RandomForest(max_depth=20)
     clf.fit(dataset, targets)
-    return int(clf.predict([games.get_stats(home_team, away_team)]))
+    return 1 if clf.predict([games.get_stats(home_team, away_team)]) else 0
 
 
-if __name__ == "__main__":
-    import python_ta
-
-    python_ta.check_all(config={
-        'max-line-length': 120
-    })
+# if __name__ == "__main__":
+#     import python_ta
+#
+#     python_ta.check_all(config={
+#         'extra-imports': [],  # the names (strs) of imported modules
+#         'allowed-io': [],  # the names (strs) of functions that call print/open/input
+#         'max-line-length': 120
+#     })

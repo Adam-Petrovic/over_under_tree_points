@@ -1,7 +1,22 @@
-"""
-I have followed this Tutorial, as discussed with Prof. Sharmin (she says it's okay):
+"""Over Under Tree Points: decision_tree.py
+
+Module Description
+==================
+This module deals decision trees, or what RandomForest makes a lot of copies of.
+
+In order to implement this code, I have followed this Tutorial, as discussed with Prof. Sharmin (she says it's okay):
     - https://www.youtube.com/watch?v=NxEHSAfFlK8
-    - https://www.youtube.com/watch?v=kFwe2ZZU7yw
+
+Copyright and Usage Information
+===============================
+
+This file is provided solely for the personal and use of Adam.
+All forms of distribution of this code, whether as given or with any changes, are
+expressly prohibited, unless permitted by either Adam.
+For more information on copyright on this material,
+please message Adam at adam.petrovic2005@gmail.com
+
+This file is Copyright (c) 2024 Adam Petrovic
 """
 from __future__ import annotations
 from collections import Counter
