@@ -1,11 +1,5 @@
 # Over Under Tree Points Requirements
 
-# For train.py
-sklearn.utils
-
-# For decision_tree.py and random_forest.py:
-collections
-
-# For app.py
-tkinter
-customtkinter
+customtkinter~=5.2.2
+numpy~=1.26.3
+scikit-learn~=1.4.1.post1

@@ -1,6 +1,24 @@
 """
-Random Forest Tree:
-Works by taking a subset of parameters and making many DecisionTrees
+Over Under Tree Points: random_forest.py
+
+Module Description
+==================
+This module deals with the Random Forest Implementation. It works by taking subsets of the parameters passed in from
+train.py, and making many DecisionTree based on these to prevent over fitting.
+
+In order to implement this code, I have followed this Tutorial, as discussed with Prof. Sharmin (she says it's okay):
+    - https://www.youtube.com/watch?v=kFwe2ZZU7yw
+
+Copyright and Usage Information
+===============================
+
+This file is provided solely for the personal and use of Adam.
+All forms of distribution of this code, whether as given or with any changes, are
+expressly prohibited, unless permitted by Adam.
+For more information on copyright on this material,
+please message Adam at adam.petrovic2005@gmail.com
+
+This file is Copyright (c) 2024 Adam Petrovic
 """
 from collections import Counter
 import numpy as np
